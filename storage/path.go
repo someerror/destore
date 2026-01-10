@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Struct resolving by [PathGenerator]
 type ResolvedPath struct {
 	PathName string
 	FileName string

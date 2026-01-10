@@ -7,5 +7,5 @@ type Store interface {
 	Clear() error
 	Write(key string, r io.Reader) (int64, error)
 	Read(key string) (io.ReadCloser, error)
-	Deete(key string) error
+	Delete(key string) error
 }
