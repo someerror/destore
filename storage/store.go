@@ -92,6 +92,23 @@ func (s *Store) Write(key string, r io.Reader) (int64, error) {
 	return io.Copy(f, r)
 }
 
+// os.Remove Syscall and cleanup empty dirs
+func (s *Store) Delete(key string) error {
+	fullPath := s.resolvePath(key)
+
+	if err := os.Remove(fullPath); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+
+		return fmt.Errorf("store.delete: os.Remove failed to remove for key %q: %w", key, err)
+	}
+
+	s.cleanUpEmptyDirs(key)
+
+	return nil
+}
+
 // os.MkdirAll Syscall os.Create Syscall
 func (s *Store) createFile(key string) (*os.File, error) {
 	fullPath := s.resolvePath(key)
@@ -125,19 +142,3 @@ func (s *Store) cleanUpEmptyDirs(key string) {
 	}
 }
 
-// os.Remove Syscall and cleanup empty dirs
-func (s *Store) Delete(key string) error {
-	fullPath := s.resolvePath(key)
-
-	if err := os.Remove(fullPath); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-
-		return fmt.Errorf("store.delete: os.Remove failed to remove for key %q: %w", key, err)
-	}
-
-	s.cleanUpEmptyDirs(key)
-
-	return nil
-}
