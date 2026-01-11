@@ -141,4 +141,3 @@ func (s *Store) cleanUpEmptyDirs(key string) {
 		dir = filepath.Dir(dir)
 	}
 }
-
