@@ -50,14 +50,14 @@ func TestStore_Lyfecicle(t *testing.T) {
 	}
 
 	// Stage 2: Has func
-	exists, err := store.Has(key)
+	ok, err := store.Has(key)
 
 	if err != nil {
 		t.Fatalf("Has func Failed")
 	}
 
-	if !exists {
-		t.Fatalf("Has func error: Expected key %s to exist", key)
+	if !ok {
+		t.Errorf("Has func error: Expected key %s to exist", key)
 	}
 
 	// Stage 3: Read func
