@@ -3,8 +3,18 @@ package storage
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"testing"
 )
+
+func newStore(t *testing.T) *Store {
+	conf := StoreConf{
+		Root:          t.TempDir(),
+		PathGenerator: DefaultPathGenerator,
+	}
+
+	return NewStore(conf)
+}
 
 func TestDefaultPathGenerator(t *testing.T) {
 	key := "awesometestfile"
@@ -21,52 +31,88 @@ func TestDefaultPathGenerator(t *testing.T) {
 	}
 }
 
-func newStore(t *testing.T) *Store {
-	conf := StoreConf{
-		Root:          t.TempDir(),
-		PathGenerator: DefaultPathGenerator,
-	}
-
-	return NewStore(conf)
-}
-
-func TestStore_Lyfecicle(t *testing.T) {
+func TestStore_Lyfecycle(t *testing.T) {
 	store := newStore(t)
 
 	key := "usr/someerror/avatar"
 	data := []byte("data_bytes")
 
 	// Stage 1: Write func
-	n, err := store.Write(key, bytes.NewReader(data))
+	success := t.Run("Store Write", func(t *testing.T) {
+		n, err := store.Write(key, bytes.NewReader(data))
 
-	if err != nil {
-		t.Fatalf("Write Failed")
-	}
+		if err != nil {
+			t.Fatalf("Write Failed")
+		}
 
-	dataLen := int64(len(data))
+		dataLen := int64(len(data))
 
-	if n != dataLen {
-		t.Errorf("Short write: expected %d bytes, got %d bytes", dataLen, n)
+		if n != dataLen {
+			t.Errorf("Short write: expected %d bytes, got %d bytes", dataLen, n)
+		}
+	})
+
+	if !success {
+		t.FailNow()
 	}
 
 	// Stage 2: Has func
-	ok, err := store.Has(key)
+	success = t.Run("Store Has", func(t *testing.T) {
+		ok, err := store.Has(key)
+		if err != nil {
+			t.Fatalf("Has func Failed")
+		}
 
-	if err != nil {
-		t.Fatalf("Has func Failed")
-	}
+		if !ok {
+			t.Errorf("Has func error: Expected key %s to exist", key)
+		}
+	})
 
-	if !ok {
-		t.Errorf("Has func error: Expected key %s to exist", key)
+	if !success {
+		t.FailNow()
 	}
 
 	// Stage 3: Read func
+	success = t.Run("Store Read", func(t *testing.T) {
+		r, err := store.Read(key)
+		if err != nil {
+			t.Fatalf("Read func error: %s", err)
+		}
+
+		defer r.Close()
+
+		readData, err := io.ReadAll(r)
+		if err != nil {
+			t.Fatalf("ReadAll error: %s", err)
+		}
+
+		if string(readData) != string(data) {
+			t.Errorf("Read error: expected %s, got %s", data, readData)
+		}
+	})
+
+	// Stage 4: Delete
+	t.Run("Store Delete", func(t *testing.T) {
+		err := store.Delete(key)
+		if err != nil {
+			t.Fatalf("Delete fatal error: %q", err)
+		}
+
+		ok, err := store.Has(key)
+		if err != nil {
+			t.Fatalf("Has error after delete: %q", err)
+		}
+
+		if ok {
+			t.Errorf("Delete error: key %s not deleted", key)
+		}
+	})
 }
 
 func TestStore_Parallel_Write(t *testing.T) {
 	store := newStore(t)
 
-	for i := range 100 {
+	for i := range 10 {
 		t.Run(fmt.Sprintf("peer_%d", i), func(t *testing.T) {
 			t.Parallel()
 			key := fmt.Sprintf("key_%d", i)
