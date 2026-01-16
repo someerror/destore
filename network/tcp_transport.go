@@ -3,6 +3,7 @@ package network
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net"
 
@@ -56,7 +57,7 @@ func (t *TCPTransport) Dial(addr string) error {
 	return nil
 }
 
-func (t *TCPTransport) listenAndAccept() error {
+func (t *TCPTransport) ListenAndAccept() error {
 	var err error
 	t.listener, err = net.Listen("tcp", t.ListenAddr)
 	if err != nil {
@@ -65,7 +66,7 @@ func (t *TCPTransport) listenAndAccept() error {
 
 	go t.startAcceptLoop()
 
-	slog.Info("Listen on: %s", t.ListenAddr)
+	slog.Info("TCP transport started", "port", t.ListenAddr)
 
 	return nil
 }
@@ -92,7 +93,9 @@ func (t *TCPTransport) handleConn(conn net.Conn, outbound bool) {
 	var err error
 
 	defer func() {
-		fmt.Printf("peer connection dropped with error: %q", err)
+		if !errors.Is(err, io.EOF) {
+			fmt.Printf("peer connection dropped with error: %q", err)
+		}
 		conn.Close()
 	}()
 
