@@ -14,7 +14,7 @@ type Message struct {
 
 type Peer interface {
 	net.Conn
-	Send([]byte) error
+	Send(Message) error
 }
 
 type Transport interface {

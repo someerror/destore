@@ -14,6 +14,7 @@ type TCPTransportOpts struct {
 	ListenAddr    string
 	HandshakeFunc HandshakeFunc
 	Decoder       core.Decoder
+	Encoder       core.Encoder
 	OnPeer        func(core.Peer) error
 }
 
@@ -99,7 +100,7 @@ func (t *TCPTransport) handleConn(conn net.Conn, outbound bool) {
 		conn.Close()
 	}()
 
-	peer := NewTCPPeer(conn, outbound)
+	peer := NewTCPPeer(conn, outbound, t.Encoder)
 
 	if t.HandshakeFunc != nil {
 		err = t.HandshakeFunc(peer)
