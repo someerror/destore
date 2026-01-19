@@ -9,6 +9,10 @@ import (
 
 type GOBDecoder struct{}
 
+func NewGOBDecoder () *GOBDecoder {
+	return &GOBDecoder{}
+}
+
 var _ core.Decoder = (*GOBDecoder)(nil)
 
 func (d *GOBDecoder) Decode(r io.Reader, msg *core.Message) error {
@@ -28,6 +32,10 @@ func (d *GOBDecoder) Decode(r io.Reader, msg *core.Message) error {
 }
 
 type GOBEncoder struct {}
+
+func NewGOBEncoder () *GOBEncoder {
+	return &GOBEncoder{}
+}
 
 var _ core.Encoder = (*GOBEncoder)(nil)
 
